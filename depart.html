@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ma famille — ALNG 1101</title>
+    <title> ALNG 1101</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,6 +14,7 @@
 </head>
 
 <body>
+
 
     <header class="site-header">
         <div class="header-inner">
@@ -33,13 +34,15 @@
                     <li><a href="./presentation.html"><span class="menu-num">02</span><span
                                 class="menu-label">انا</span></a></li>
                     <li><a href="./famille.html"><span class="menu-num">03</span><span
-                                class="menu-label">اسرتي</span></a></li>
+                                class="menu-label">اسرتي</span></a>
+                    </li>
                     <li><a href="./ami.html"><span class="menu-num">04</span><span class="menu-label">أفضل
                                 صديق</span></a></li>
                     <li><a href="./lieux.html"><span class="menu-num">05</span><span class="menu-label">زيارة في
                                 مصر</span></a></li>
                     <li><a href="./routine.html"><span class="menu-num">06</span><span
-                                class="menu-label">روتين</span></a></li>
+                                class="menu-label">روتين</span></a>
+                    </li>
                     <li><a href="./depart.html"><span class="menu-num">07</span><span class="menu-label">مع
                                 السلامة</span></a></li>
                 </ul>
@@ -51,9 +54,37 @@
         <p class="page-num">— 07 —</p>
         <h2 class="page-title">مع السلامة</h2>
 
-        <div class="photo-frame">
-            <img src="images/avion.jpeg" alt="Family tree">
+        <div class="game-block">
+            <p class="game-instruction">
+                Click and find pairs!
+            </p>
+
+            <div class="game-stats">
+                <span class="stat">Paires trouvées : <strong id="score">0</strong> / 6</span>
+                <button class="reset-btn" id="reset-btn">Recommencer</button>
+            </div>
+
+            <div class="game-grid" id="game-grid">
+                <!-- Les cartes sont générées par JS avec un ordre aléatoire -->
+            </div>
+
+            <div class="game-success" id="game-success" hidden>
+                🎉 <strong>Bravo !</strong> Tu as trouvé toutes les paires !
+            </div>
+
+            <details class="answer-key">
+                <summary>Correction</summary>
+                <ul>
+                    <li>كِتاب → كُتُب </li>
+                    <li>طالِب → طُلّاب </li>
+                    <li>بَيت → بُيوت </li>
+                    <li>قَلَم → أَقلام </li>
+                    <li>وَلَد → أَولاد </li>
+                    <li>بِنت → بَنات </li>
+                </ul>
+            </details>
         </div>
+
 
         <nav class="pager">
             <a class="prev" href="lieux.html"><span class="pager-label"></span><span class="pager-title">
