@@ -4,17 +4,192 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title> ALNG 1101</title>
+    <title>ALNG 1101</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
         href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+
+    <style>
+        /* ── Fallback styles if styles.css is absent ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: #faf8f4; color: #2c2c2c; direction: rtl; }
+
+        /* ── Game layout ── */
+        .game-block { max-width: 680px; margin: 2rem auto; padding: 0 1rem; }
+        .game-instruction { text-align: center; margin-bottom: 1rem; font-size: 1rem; color: #555; font-family: 'Cormorant Garamond', serif; font-style: italic; }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            font-size: 0.9rem;
+        }
+        .stat { color: #444; }
+
+        .reset-btn {
+            background: #2c2c2c;
+            color: #faf8f4;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.82rem;
+            transition: background 0.2s;
+        }
+        .reset-btn:hover { background: #555; }
+
+        /* ── Grid ── */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        /* ── Card ── */
+        .card {
+            aspect-ratio: 1 / 1.1;
+            perspective: 800px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+        }
+
+        .card.flipped .card-inner,
+        .card.matched .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        /* Front = hidden face */
+        .card-front {
+            background: #2c4a3e;
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.04) 0px,
+                rgba(255,255,255,0.04) 1px,
+                transparent 1px,
+                transparent 10px
+            );
+            box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+        }
+        .card-front::after {
+            content: '؟';
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Back = word */
+        .card-back {
+            background: #fff;
+            transform: rotateY(180deg);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+            border: 2px solid #e8e2d8;
+            font-family: 'Amiri', serif;
+            font-size: 1.35rem;
+            color: #2c2c2c;
+            line-height: 1.4;
+        }
+
+        /* Singular cards get a subtle warm tint */
+        .card[data-type="singular"] .card-back {
+            background: #fffbf5;
+            border-color: #d4c9a8;
+            color: #5a3e1b;
+        }
+        /* Plural cards get a cool tint */
+        .card[data-type="plural"] .card-back {
+            background: #f3f7ff;
+            border-color: #b0c4de;
+            color: #1b3a5a;
+        }
+
+        /* Matched state */
+        .card.matched .card-back {
+            background: #e8f5e9;
+            border-color: #81c784;
+            color: #2e7d32;
+        }
+
+        /* Wrong flash */
+        .card.wrong .card-inner {
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: rotateY(180deg) translateX(0); }
+            25% { transform: rotateY(180deg) translateX(-6px); }
+            75% { transform: rotateY(180deg) translateX(6px); }
+        }
+
+        /* Success banner */
+        .game-success {
+            margin-top: 1.5rem;
+            text-align: center;
+            padding: 1rem;
+            background: #e8f5e9;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Answer key */
+        .answer-key {
+            margin-top: 2rem;
+            font-family: 'Amiri', serif;
+            font-size: 1.05rem;
+        }
+        .answer-key summary {
+            cursor: pointer;
+            color: #888;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        .answer-key ul { list-style: none; padding-right: 1rem; }
+        .answer-key li { padding: 0.25rem 0; border-bottom: 1px solid #eee; }
+
+        /* Pager */
+        .pager { display: flex; justify-content: space-between; max-width: 680px; margin: 3rem auto 2rem; padding: 0 1rem; }
+        .pager a { text-decoration: none; color: #2c4a3e; font-family: 'Cairo', sans-serif; font-size: 0.9rem; }
+        .pager a:hover { text-decoration: underline; }
+
+        /* Page header */
+        .page-num { text-align: center; color: #aaa; font-size: 0.8rem; margin-top: 2rem; letter-spacing: 0.1em; }
+        .page-title { text-align: center; font-family: 'Amiri', serif; font-size: 2.5rem; margin: 0.25rem 0 1.5rem; }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .game-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+            .card-back { font-size: 1.1rem; }
+        }
+    </style>
 </head>
 
 <body>
-
 
     <header class="site-header">
         <div class="header-inner">
@@ -24,27 +199,18 @@
 
             <div class="dropdown">
                 <button class="dropdown-toggle" aria-expanded="false" aria-haspopup="true">
-                    <span class="current-num">01</span>
-                    <span class="current-label">Accueil</span>
+                    <span class="current-num">07</span>
+                    <span class="current-label">مع السلامة</span>
                     <span class="caret">▾</span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
-                    <li><a href="./index.html"><span class="menu-num">01</span><span class="menu-label">حياتي</span></a>
-                    </li>
-                    <li><a href="./presentation.html"><span class="menu-num">02</span><span
-                                class="menu-label">انا</span></a></li>
-                    <li><a href="./famille.html"><span class="menu-num">03</span><span
-                                class="menu-label">اسرتي</span></a>
-                    </li>
-                    <li><a href="./ami.html"><span class="menu-num">04</span><span class="menu-label">أفضل
-                                صديق</span></a></li>
-                    <li><a href="./lieux.html"><span class="menu-num">05</span><span class="menu-label">زيارة في
-                                مصر</span></a></li>
-                    <li><a href="./routine.html"><span class="menu-num">06</span><span
-                                class="menu-label">روتين</span></a>
-                    </li>
-                    <li><a href="./depart.html"><span class="menu-num">07</span><span class="menu-label">مع
-                                السلامة</span></a></li>
+                    <li><a href="./index.html"><span class="menu-num">01</span><span class="menu-label">حياتي</span></a></li>
+                    <li><a href="./presentation.html"><span class="menu-num">02</span><span class="menu-label">انا</span></a></li>
+                    <li><a href="./famille.html"><span class="menu-num">03</span><span class="menu-label">اسرتي</span></a></li>
+                    <li><a href="./ami.html"><span class="menu-num">04</span><span class="menu-label">أفضل صديق</span></a></li>
+                    <li><a href="./lieux.html"><span class="menu-num">05</span><span class="menu-label">زيارة في مصر</span></a></li>
+                    <li><a href="./routine.html"><span class="menu-num">06</span><span class="menu-label">روتين</span></a></li>
+                    <li><a href="./depart.html"><span class="menu-num">07</span><span class="menu-label">مع السلامة</span></a></li>
                 </ul>
             </div>
         </div>
@@ -56,7 +222,7 @@
 
         <div class="game-block">
             <p class="game-instruction">
-                Click and find pairs!
+                Click and find pairs! · اربط كل مفرد بجمعه
             </p>
 
             <div class="game-stats">
@@ -64,9 +230,7 @@
                 <button class="reset-btn" id="reset-btn">Recommencer</button>
             </div>
 
-            <div class="game-grid" id="game-grid">
-                <!-- Les cartes sont générées par JS avec un ordre aléatoire -->
-            </div>
+            <div class="game-grid" id="game-grid"></div>
 
             <div class="game-success" id="game-success" hidden>
                 🎉 <strong>Bravo !</strong> Tu as trouvé toutes les paires !
@@ -75,27 +239,150 @@
             <details class="answer-key">
                 <summary>Correction</summary>
                 <ul>
-                    <li>كِتاب → كُتُب </li>
-                    <li>طالِب → طُلّاب </li>
-                    <li>بَيت → بُيوت </li>
-                    <li>قَلَم → أَقلام </li>
-                    <li>وَلَد → أَولاد </li>
-                    <li>بِنت → بَنات </li>
+                    <li>كِتاب → كُتُب</li>
+                    <li>طالِب → طُلّاب</li>
+                    <li>بَيت → بُيوت</li>
+                    <li>قَلَم → أَقلام</li>
+                    <li>وَلَد → أَولاد</li>
+                    <li>بِنت → بَنات</li>
                 </ul>
             </details>
         </div>
 
-
         <nav class="pager">
-            <a class="prev" href="lieux.html"><span class="pager-label"></span><span class="pager-title">
-                    روتين</span></a>
-            <a class="next" href="index.html"><span class="pager-label"></span><span class="pager-title">مع
-                    حياتي</span></a>
+            <a class="prev" href="routine.html"><span class="pager-label">←</span><span class="pager-title"> روتين</span></a>
+            <a class="next" href="index.html"><span class="pager-title">حياتي </span><span class="pager-label">→</span></a>
         </nav>
     </main>
 
+    <script>
+    (() => {
+        // ── Data ──────────────────────────────────────────────
+        const PAIRS = [
+            { id: 1, singular: 'كِتاب',  plural: 'كُتُب'  },
+            { id: 2, singular: 'طالِب',  plural: 'طُلّاب' },
+            { id: 3, singular: 'بَيت',   plural: 'بُيوت'  },
+            { id: 4, singular: 'قَلَم',  plural: 'أَقلام' },
+            { id: 5, singular: 'وَلَد',  plural: 'أَولاد' },
+            { id: 6, singular: 'بِنت',   plural: 'بَنات'  },
+        ];
 
-    <script src="styles.js"></script>
+        // ── State ─────────────────────────────────────────────
+        let flipped  = [];   // currently face-up (max 2)
+        let matched  = new Set();
+        let locked   = false;
+
+        // ── DOM refs ──────────────────────────────────────────
+        const grid      = document.getElementById('game-grid');
+        const scoreEl   = document.getElementById('score');
+        const successEl = document.getElementById('game-success');
+        const resetBtn  = document.getElementById('reset-btn');
+
+        // ── Shuffle helper ────────────────────────────────────
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        // ── Build cards ───────────────────────────────────────
+        function buildCards() {
+            // Create one card per word (singular + plural = 2 cards per pair)
+            const cards = [];
+            PAIRS.forEach(p => {
+                cards.push({ pairId: p.id, word: p.singular, type: 'singular' });
+                cards.push({ pairId: p.id, word: p.plural,   type: 'plural'   });
+            });
+            return shuffle(cards);
+        }
+
+        // ── Render grid ───────────────────────────────────────
+        function render() {
+            grid.innerHTML = '';
+            flipped  = [];
+            matched  = new Set();
+            locked   = false;
+            scoreEl.textContent = '0';
+            successEl.hidden = true;
+
+            buildCards().forEach((data, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.pairId = data.pairId;
+                card.dataset.type   = data.type;
+                card.dataset.index  = index;
+
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-face card-front"></div>
+                        <div class="card-face card-back">${data.word}</div>
+                    </div>`;
+
+                card.addEventListener('click', () => onCardClick(card));
+                grid.appendChild(card);
+            });
+        }
+
+        // ── Click handler ─────────────────────────────────────
+        function onCardClick(card) {
+            if (locked) return;
+            if (card.classList.contains('flipped')) return;
+            if (card.classList.contains('matched')) return;
+
+            card.classList.add('flipped');
+            flipped.push(card);
+
+            if (flipped.length === 2) {
+                locked = true;
+                checkPair();
+            }
+        }
+
+        // ── Pair check ────────────────────────────────────────
+        function checkPair() {
+            const [a, b] = flipped;
+            const sameId   = a.dataset.pairId === b.dataset.pairId;
+            const diffType = a.dataset.type   !== b.dataset.type;
+
+            if (sameId && diffType) {
+                // ✅ Match
+                setTimeout(() => {
+                    a.classList.add('matched');
+                    b.classList.add('matched');
+                    matched.add(a.dataset.pairId);
+                    scoreEl.textContent = matched.size;
+
+                    if (matched.size === PAIRS.length) {
+                        successEl.hidden = false;
+                    }
+
+                    flipped = [];
+                    locked  = false;
+                }, 500);
+            } else {
+                // ❌ No match — shake then flip back
+                a.classList.add('wrong');
+                b.classList.add('wrong');
+
+                setTimeout(() => {
+                    a.classList.remove('flipped', 'wrong');
+                    b.classList.remove('flipped', 'wrong');
+                    flipped = [];
+                    locked  = false;
+                }, 900);
+            }
+        }
+
+        // ── Reset ─────────────────────────────────────────────
+        resetBtn.addEventListener('click', render);
+
+        // ── Init ──────────────────────────────────────────────
+        render();
+    })();
+    </script>
+
 </body>
-
 </html>
